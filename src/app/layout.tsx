@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import Navbar from "@/components/Navbar";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,21 +18,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} bg-gray-50 text-gray-900`}>
-        <Providers>
-          {/* Navbar har page par upar dikhega */}
-          <Navbar />
-          
-          <main className="min-h-screen">
-            {children}
-          </main>
-
-          {/* Aap chahein toh yaha ek simple Footer bhi add kar sakte hain */}
-          <footer className="py-8 text-center text-xs text-gray-400">
-            © {new Date().getFullYear()} Note-Master. All rights reserved.
-          </footer>
-        </Providers>
+    // suppressHydrationWarning yahan zaroori hai kyunki next-themes html attributes ko modify karta hai
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} transition-colors duration-300`}>
+        <ThemeProvider>
+          <Providers>
+            <Navbar />
+            <main className="min-h-screen bg-gray-50 dark:bg-[#0B141D]">
+              {children}
+            </main>
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

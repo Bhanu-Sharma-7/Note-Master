@@ -2,11 +2,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { FaBook } from "react-icons/fa";
 
 export default function RegisterPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -18,7 +17,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify(formData),
       });
 
       if (res.ok) {
@@ -36,84 +35,81 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-6 py-12">
-      <div className="w-full max-w-md">
-        {/* Logo Section */}
-        <div className="text-center mb-10">
-          <Link href="/" className="text-3xl font-black tracking-tighter text-gray-900">
-            Note<span className="text-blue-600">.</span>Master
-          </Link>
-          <p className="text-gray-500 mt-2 font-medium text-sm">Join us and start organizing your thoughts today.</p>
-        </div>
+    <div className="relative min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-[#030712] px-6 transition-colors duration-500 overflow-hidden">
+      
+      {/* Decorative Glow Blobs */}
+      <div className="absolute top-[-5%] right-[-5%] w-[30%] h-[30%] bg-emerald-500/10 blur-[100px] rounded-full hidden dark:block"></div>
+      <div className="absolute bottom-[-5%] left-[-5%] w-[30%] h-[30%] bg-blue-500/10 blur-[100px] rounded-full hidden dark:block"></div>
 
-        {/* Register Card */}
-        <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                Full Name
-              </label>
-              <input
-                type="text"
-                placeholder="John Doe"
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-sm font-medium"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+      {/* Main Container - Compact Width 380px */}
+      <div className="w-full max-w-[380px] z-10">
+        
+        {/* Compact Glass Card */}
+        <div className="bg-white dark:bg-[#111827]/60 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-white/[0.05]">
+          
+          {/* Minimal Logo Section */}
+          <div className="text-center mb-7">
+            <div className="inline-flex p-3 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl mb-4 shadow-md shadow-emerald-500/20">
+              <FaBook className="text-white text-xl" />
             </div>
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+              Join Us
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
+              Start your digital diary today
+            </p>
+          </div>
 
-            <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                Email Address
-              </label>
-              <input
-                type="email"
-                placeholder="example@gmail.com"
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-sm font-medium"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-3.5">
+            <input
+              type="text"
+              placeholder="Full Name"
+              className="w-full p-3.5 bg-gray-50 dark:bg-[#1F2937]/50 border border-transparent dark:border-white/[0.03] rounded-xl focus:bg-white dark:focus:bg-[#1F2937] focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-sm font-medium text-gray-900 dark:text-white"
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              required
+            />
 
-            <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                Password
-              </label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-sm font-medium"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+            <input
+              type="email"
+              placeholder="Email"
+              className="w-full p-3.5 bg-gray-50 dark:bg-[#1F2937]/50 border border-transparent dark:border-white/[0.03] rounded-xl focus:bg-white dark:focus:bg-[#1F2937] focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-sm font-medium text-gray-900 dark:text-white"
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              required
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              className="w-full p-3.5 bg-gray-50 dark:bg-[#1F2937]/50 border border-transparent dark:border-white/[0.03] rounded-xl focus:bg-white dark:focus:bg-[#1F2937] focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-sm font-medium text-gray-900 dark:text-white"
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              required
+            />
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white dark:text-[#030712] rounded-xl font-bold transition-all active:scale-[0.97] shadow-lg shadow-emerald-500/10 text-sm mt-2"
             >
-              {loading ? "Creating Account..." : "Create Free Account"}
+              {loading ? "Creating..." : "Create Account"}
             </button>
           </form>
 
-          <div className="mt-8 text-center border-t border-gray-50 pt-6">
-            <p className="text-sm text-gray-500 font-medium">
-              Already have an account?{" "}
-              <Link href="/login" className="text-blue-600 font-bold hover:underline">
+          {/* Footer Navigation */}
+          <div className="mt-8 text-center border-t border-gray-100 dark:border-white/[0.05] pt-6">
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+              Already a member?{" "}
+              <Link href="/login" className="text-emerald-600 dark:text-emerald-500 font-bold hover:underline">
                 Login Here
               </Link>
             </p>
           </div>
         </div>
 
-        {/* Footer Text */}
-        <p className="mt-8 text-center text-xs text-gray-400 font-medium italic">
-          By signing up, you agree to our Terms and Conditions.
-        </p>
+        {/* Minimal Bottom Info */}
+        <div className="mt-8 flex justify-center gap-6">
+            <span className="text-[10px] text-gray-400 dark:text-gray-600 font-bold tracking-widest uppercase">Privacy First</span>
+            <span className="text-[10px] text-gray-400 dark:text-gray-600 font-bold tracking-widest uppercase">Secure Storage</span>
+        </div>
       </div>
     </div>
   );

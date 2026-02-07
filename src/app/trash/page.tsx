@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/db";
 import Note from "@/models/Note";
 import User from "@/models/User";
 import TrashActions from "@/components/TrashActions";
+import { FaTrashAlt, FaCalendarAlt } from "react-icons/fa";
 
 export default async function TrashPage() {
   const session = await getServerSession();
@@ -14,63 +15,118 @@ export default async function TrashPage() {
 
   await connectToDatabase();
 
-  // 1. Robust ID Logic (BSON Error Fix)
+  // 1. Robust ID Logic (Aapka BSON Error Fix)
   let userId = (session.user as any).id;
-
-  // Agar session mein ID nahi hai, toh email se database se nikaalein
   if (!userId && session.user.email) {
     const dbUser = await User.findOne({ email: session.user.email }).select("_id");
     userId = dbUser?._id;
   }
 
-  // Final check agar abhi bhi ID nahi mili
   if (!userId) {
     redirect("/login");
   }
 
-  // 2. Sirf wahi notes jo is user ke hain aur trash mein hain
+  // 2. Fetch Trashed Notes
   const trashedNotes = await Note.find({ 
     userId, 
     isTrash: true 
   }).sort({ updatedAt: -1 });
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto">
-        <header className="mb-10">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <span className="p-2 bg-red-100 rounded-lg text-red-600">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </span>
-            Trash Bin
-          </h1>
-          <p className="text-gray-500 mt-2">Yahan aapke delete kiye huye notes 30 din tak rehte hain (Coming soon feature).</p>
-        </header>
-
-        {trashedNotes.length === 0 ? (
-          <div className="bg-white rounded-3xl p-20 text-center border border-dashed border-gray-200">
-            <p className="text-gray-400 text-lg font-medium">Trash khali hai!</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {trashedNotes.map((note) => (
-              <div key={note._id.toString()} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                <h2 className="font-bold text-xl mb-2 text-gray-800 line-clamp-1">{note.title}</h2>
-                <p className="text-gray-600 text-sm mb-6 line-clamp-3">{note.content}</p>
-                
-                <div className="flex justify-between items-center pt-4 border-t border-gray-50">
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                    Deleted
-                  </span>
-                  {/* Yahan hamare TrashActions kaam karenge */}
-                  <TrashActions noteId={note._id.toString()} />
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#030712] via-[#0A0F1A] to-[#030712] text-white">
+      {/* Navbar Space - Important Fix */}
+      <div className="h-16"></div> {/* This creates space for fixed navbar */}
+      
+      <div className="px-4 md:px-8 pb-16">
+        <div className="max-w-6xl mx-auto">
+          
+          {/* Clean Header Section - Adjusted spacing */}
+          <div className="mb-10">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-4 bg-gradient-to-br from-rose-500/10 to-rose-600/5 rounded-xl border border-rose-500/20">
+                <FaTrashAlt size={24} className="text-rose-400" />
               </div>
-            ))}
+              
+              <div>
+                <h1 className="text-3xl font-bold text-white">Recycle Bin</h1>
+                <p className="text-gray-400 text-sm mt-1">
+                  {trashedNotes.length} deleted item{trashedNotes.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Main Content */}
+          <div>
+            {trashedNotes.length === 0 ? (
+              /* Empty State */
+              <div className="flex flex-col items-center justify-center py-32">
+                <div className="w-20 h-20 bg-gradient-to-br from-rose-500/5 to-rose-600/5 rounded-full flex items-center justify-center border border-dashed border-rose-500/20 mb-6">
+                  <FaTrashAlt size={28} className="text-rose-500/40" />
+                </div>
+                
+                <h3 className="text-2xl font-bold text-white mb-3">Recycle Bin Empty</h3>
+                <p className="text-gray-400 text-center max-w-md">
+                  No deleted notes found
+                </p>
+              </div>
+            ) : (
+              /* Notes Grid - Clean Cards */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {trashedNotes.map((note) => (
+                  <div 
+                    key={note._id.toString()} 
+                    className="group"
+                  >
+                    {/* Note Card */}
+                    <div className="h-full bg-white/5 rounded-xl border border-white/10 hover:border-rose-500/20 transition-all duration-300 overflow-hidden flex flex-col">
+                      
+                      {/* Card Header */}
+                      <div className="p-5 flex-1">
+                        <div className="flex justify-between items-start mb-3">
+                          <span className="px-2 py-1 bg-rose-500/10 text-rose-400 text-[10px] font-bold uppercase tracking-wider rounded">
+                            ARCHIVED
+                          </span>
+                        </div>
+                        
+                        {/* Note Title */}
+                        <h3 className="font-bold text-lg text-white mb-3 truncate">
+                          {note.title || "Untitled Note"}
+                        </h3>
+                        
+                        {/* Note Content Preview */}
+                        <p className="text-gray-400 text-sm leading-relaxed line-clamp-4 italic mb-5">
+                          {note.content || "No content"}
+                        </p>
+                      </div>
+                      
+                      {/* Card Footer */}
+                      <div className="p-4 border-t border-white/10 bg-white/2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <FaCalendarAlt size={12} className="text-gray-500" />
+                            <span className="text-sm text-gray-300 font-medium">
+                              {new Date(note.updatedAt).toLocaleDateString('en-GB', { 
+                                day: 'numeric', 
+                                month: 'short',
+                                year: 'numeric'
+                              })}
+                            </span>
+                          </div>
+                          
+                          {/* Action Buttons */}
+                          <div className="flex items-center gap-1">
+                            <TrashActions noteId={note._id.toString()} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
