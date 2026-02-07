@@ -1,108 +1,108 @@
-"use client";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import NoteForm from "@/components/NoteForm";
+import DeleteButton from "@/components/DeleteButton";
+import { connectToDatabase } from "@/lib/db";
+import Note from "@/models/Note";
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import Link from "next/link";
+export default async function Dashboard({
+  searchParams,
+}: {
+  searchParams: { q?: string };
+}) {
+  const session = await getServerSession();
+  if (!session) redirect("/login");
 
-export default function DashboardPage() {
-  const { data: session } = useSession();
-  const [notes, setNotes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const query = searchParams.q || "";
+  const userId = (session.user as any).id || session.user?.email;
 
-  useEffect(() => {
-    const fetchNotes = async () => {
-      if (!session?.user?.id) return;
-      try {
-        const res = await fetch(`/api/notes?userId=${session?.user?.id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setNotes(data);
-        }
-      } catch (error) {
-        console.error("Error fetching notes:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchNotes();
-  }, [session]);
-
-  const stats = [
-    { label: "Total Notes", value: "1,284", iconColor: "text-emerald-400", bg: "bg-emerald-500/10", badge: "+12%" },
-    { label: "Notebooks", value: "14", iconColor: "text-blue-400", bg: "bg-blue-500/10", badge: "Active" },
-    { label: "Favorites", value: "128", iconColor: "text-orange-400", bg: "bg-orange-500/10", badge: "8 total" },
-    { label: "Cloud Usage", value: "4.2 GB", iconColor: "text-purple-400", bg: "bg-purple-500/10", badge: "Synced" },
-  ];
+  await connectToDatabase();
+  
+  const notes = await Note.find({ 
+    userId,
+    isTrash: false,
+    $or: [
+      { title: { $regex: query, $options: "i" } },
+      { content: { $regex: query, $options: "i" } },
+      { tags: { $in: [new RegExp(query, "i")] } }
+    ]
+  }).sort({ createdAt: -1 });
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700">
-      {/* 4 Premium Stat Cards - Exact 3.jpg replica */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => (
-          <div key={i} className="bg-[#111622] border border-white/[0.03] p-8 rounded-[2.5rem] relative overflow-hidden group hover:border-white/[0.1] transition-all">
-            <div className="flex justify-between items-start mb-8">
-              <div className={`p-3.5 rounded-2xl ${stat.bg} ${stat.iconColor}`}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9h18"/><path d="M21 9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9"/><path d="m3 9 2.45-4.91A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.09L21 9"/></svg>
-              </div>
-              <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter ${i === 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'}`}>
-                {stat.badge}
-              </span>
-            </div>
-            <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.15em] mb-1">{stat.label}</p>
-            <h3 className="text-4xl font-black text-white tracking-tight">{stat.value}</h3>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto bg-gray-50 min-h-screen">
+      {/* Search Section */}
+      <div className="mb-10 text-center max-w-2xl mx-auto">
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
+          Your Workspace
+        </h1>
+        <form action="/dashboard" method="GET" className="relative group">
+          <input 
+            name="q" 
+            defaultValue={query}
+            placeholder="Search notes, ideas, or #tags..." 
+            className="w-full p-4 pl-6 pr-12 border-2 border-gray-200 rounded-2xl shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-300 bg-white"
+          />
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500">
+            🔍
           </div>
-        ))}
+        </form>
       </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Side: Form (Sticky) */}
+        <aside className="lg:col-span-4 h-fit lg:sticky lg:top-24">
+          <NoteForm />
+        </aside>
 
-      {/* Section Header */}
-      <div className="flex justify-between items-end mb-8">
-        <div>
-          <h2 className="text-3xl font-black text-white tracking-tight">Recent Notes</h2>
-          <p className="text-gray-500 text-sm font-bold mt-1">Manage your digital brain effortlessly.</p>
-        </div>
-        <div className="flex bg-[#111622] p-1.5 rounded-2xl border border-white/[0.03]">
-          <button className="p-2.5 text-white bg-[#1c2333] rounded-xl shadow-xl border border-white/5">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
-          </button>
-          <button className="p-2.5 text-gray-600 hover:text-gray-400 transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
-          </button>
-        </div>
-      </div>
+        {/* Right Side: Notes List */}
+        <div className="lg:col-span-8">
+          {notes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-gray-100 shadow-inner">
+              <span className="text-5xl mb-4">✍️</span>
+              <p className="text-gray-500 font-medium">
+                {query ? `No results for "${query}"` : "Nothing here yet. Write your heart out!"}
+              </p>
+            </div>
+          ) : (
+            <div className="columns-1 md:columns-2 gap-6 space-y-6">
+              {notes.map((note) => (
+                <div 
+                  key={note._id.toString()} 
+                  className="break-inside-avoid flex flex-col justify-between p-6 rounded-3xl border border-gray-100 bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden"
+                >
+                  {/* Subtle Accent Bar */}
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  
+                  <div>
+                    <h2 className="font-bold text-xl text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">
+                      {note.title}
+                    </h2>
+                    
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {note.tags && note.tags.map((tag: string) => (
+                        <span key={tag} className="text-[10px] bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full font-bold uppercase tracking-tighter">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
 
-      {/* Notes Grid: 3.jpg Masonry Style */}
-      <div className="columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8">
-        {notes.map((note: any) => (
-          <Link 
-            href={`/dashboard/edit/${note._id}`} 
-            key={note._id} 
-            className="block bg-[#111622] border border-white/[0.03] p-10 rounded-[2.8rem] hover:border-emerald-500/40 transition-all group break-inside-avoid shadow-2xl relative overflow-hidden"
-          >
-            {/* Tag Badges */}
-            <div className="flex gap-2 mb-8">
-              <span className="text-[10px] bg-blue-500/10 text-blue-400 px-3.5 py-1.5 rounded-lg font-black uppercase tracking-widest border border-blue-500/10">
-                {note.tag || "GENERAL"}
-              </span>
+                    <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
+                      {note.content}
+                    </p>
+                  </div>
+
+                  <div className="mt-8 pt-4 border-t border-gray-50 flex justify-between items-center">
+                    <span className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">
+                      {new Date(note.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                    </span>
+                    <DeleteButton noteId={note._id.toString()} />
+                  </div>
+                </div>
+              ))}
             </div>
-            
-            <h3 className="text-2xl font-black text-white mb-5 leading-[1.2] group-hover:text-emerald-400 transition-colors tracking-tight">
-              {note.title}
-            </h3>
-            
-            <p className="text-gray-500 text-[15px] font-medium leading-relaxed mb-10 line-clamp-4">
-              {note.content}
-            </p>
-            
-            <div className="flex items-center justify-between pt-8 border-t border-white/[0.03]">
-              <span className="text-[11px] text-gray-600 font-black uppercase tracking-widest">
-                {new Date(note.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </span>
-              <div className="text-gray-700 group-hover:text-emerald-400 transition-all transform group-hover:translate-x-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-              </div>
-            </div>
-          </Link>
-        ))}
+          )}
+        </div>
       </div>
     </div>
   );
