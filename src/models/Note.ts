@@ -1,8 +1,13 @@
-import mongoose, { model, models, Schema } from "mongoose";
+import { model, models, Schema } from "mongoose";
 
 const NoteSchema = new Schema({
-    heading: { type: String, required: true },
-    content: { type: String }
+    heading: {
+        type: String,
+        required: true
+    },
+    content: {
+        type: String
+    }
 }, { timestamps: true })
 
 const Note = models.Note || model('Note', NoteSchema)
